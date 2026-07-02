@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brabus Panel</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:#1a1d23;color:#dcddde;min-height:100vh}
+    #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .login-card{background:#2b2d31;border-radius:16px;padding:40px;width:100%;max-width:420px;text-align:center}
+    .login-card h1{font-size:26px;margin-bottom:8px;color:#fff}
+    .login-card p{color:#b5bac1;font-size:14px;margin-bottom:28px}
+    .login-card input{width:100%;background:#1e1f22;border:1px solid #3b3d44;border-radius:8px;color:#dcddde;padding:12px 14px;font-size:14px;outline:none;margin-bottom:14px}
+    .login-card input:focus{border-color:#5865f2}
+    .login-card button{width:100%;background:#5865f2;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer}
+    .login-card button:hover{background:#4752c4}
+    .login-error{color:#f23f43;font-size:13px;margin-top:10px;min-height:18px}
+    #panel-screen{display:none}
+    header{background:#2b2d31;border-bottom:1px solid #3b3d44;padding:12px 28px;display:flex;align-items:center;justify-content:space-between}
+    .hbot{display:flex;align-items:center;gap:12px}
+    .hbot img{width:40px;height:40px;border-radius:50%}
+    .hbot .name{font-weight:700;font-size:16px}
+    .hbot .tag{font-size:12px;color:#b5bac1}
+    .logout{background:#f23f4322;color:#f23f43;border:1px solid #f23f43;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px}
+    nav{background:#2b2d31;border-bottom:1px solid #3b3d44;display:flex;gap:4px;padding:0 16px;overflow-x:auto}
+    nav button{background:none;border:none;color:#b5bac1;padding:14px 18px;font-size:14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+    nav button:hover{color:#dcddde}
+    nav button.active{color:#fff;border-bottom-color:#5865f2}
+    .tab-content{display:none;max-width:960px;margin:24px auto;padding:0 16px}
+    .tab-content.active{display:block}
+    .card{background:#2b2d31;border-radius:12px;padding:24px;margin-bottom:20px}
+    .card h2{font-size:13px;font-weight:600;color:#b5bac1;text-transform:uppercase;letter-spacing:.06em;margin-bottom:18px}
+    label{display:block;font-size:12px;color:#b5bac1;margin-bottom:5px;margin-top:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+    select,input,textarea{width:100%;background:#1e1f22;border:1px solid #3b3d44;border-radius:8px;color:#dcddde;padding:10px 12px;font-size:14px;outline:none}
+    select:focus,input:focus,textarea:focus{border-color:#5865f2}
+    textarea{resize:vertical;min-height:90px}
+    .btn{display:inline-block;margin-top:14px;background:#5865f2;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer}
+    .btn:hover{background:#4752c4}
+    .btn.red{background:#f23f43}.btn.red:hover{background:#c0373a}
+    .btn.green{background:#23a55a}.btn.green:hover{background:#1a8a48}
+    .btn.orange{background:#f0b232}.btn.orange:hover{color:#000}
+    .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+    .info-box{background:#1e1f22;border-radius:8px;padding:14px;text-align:center}
+    .info-box .val{font-size:22px;font-weight:700;color:#5865f2}
+    .info-box .lbl{font-size:11px;color:#b5bac1;margin-top:4px;text-transform:uppercase}
+    .status-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+    .sbtn{flex:1;min-width:80px;background:#1e1f22;border:2px solid #3b3d44;border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;font-size:13px;transition:all .15s;user-select:none}
+    .sbtn.online{border-color:#23a55a}.sbtn.online.active{background:#23a55a33}
+    .sbtn.idle{border-color:#f0b232}.sbtn.idle.active{background:#f0b23233}
+    .sbtn.dnd{border-color:#f23f43}.sbtn.dnd.active{background:#f23f4333}
+    .sbtn.invisible{border-color:#80848e}.sbtn.invisible.active{background:#80848e33}
+    .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+    .dot.online{background:#23a55a}.dot.idle{background:#f0b232}.dot.dnd{background:#f23f43}.dot.invisible{background:#80848e}
+    #pfp-preview{width:72px;height:72px;border-radius:50%;object-fit:cover;margin-top:12px;border:3px solid #5865f2;display:none}
+    .member-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-height:300px;overflow-y:auto;margin-top:12px}
+    .member-item{background:#1e1f22;border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px;font-size:13px}
+    .member-item img{width:32px;height:32px;border-radius:50%}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+    .toast.ok{background:#23a55a;color:#fff}.toast.error{background:#f23f43;color:#fff}.toast.show{opacity:1}
+    .dur-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .dur-btn{background:#1e1f22;border:1px solid #3b3d44;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;color:#dcddde}
+    .dur-btn.active{border-color:#5865f2;color:#5865f2}
+    .queue-item{background:#1e1f22;border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s}
+    .queue-item:hover{background:#2b2d31}
+    .queue-item.selected{border:2px solid #5865f2;background:#5865f222}
+    .queue-item .num{font-weight:700;color:#5865f2;width:24px}
+    .queue-item .info{flex:1}
+    .queue-item .title{font-weight:600}
+    .queue-item .dur{font-size:11px;color:#b5bac1}
+    .queue-actions{display:flex;gap:6px}
+    .queue-btn{background:#3b3d44;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;color:#dcddde;transition:background .15s}
+    .queue-btn:hover{background:#5865f2}
+    .queue-btn.play{background:#23a55a}.queue-btn.play:hover{background:#1a8a48}
+    .queue-btn.remove{background:#f23f43}.queue-btn.remove:hover{background:#c0373a}
+  </style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>🤖 Brabus Panel</h1>
+    <p>Entre le token de ton bot Discord</p>
+    <input id="token-input" type="password" placeholder="Token du bot...">
+    <button onclick="login()">Se connecter</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- Panel -->
+<div id="panel-screen">
+  <header>
+    <div class="hbot">
+      <img id="bot-avatar" src="" alt="">
+      <div><div class="name" id="bot-name"></div><div class="tag" id="bot-tag"></div></div>
+    </div>
+    <button class="logout" onclick="logout()">Déconnecter</button>
+  </header>
+
+  <nav>
+    <button class="active" onclick="showTab('info')">📊 Infos</button>
+    <button onclick="showTab('music')">🎵 Musique</button>
+    <button onclick="showTab('message')">💬 Message</button>
+    <button onclick="showTab('moderation')">🛡️ Modération</button>
+    <button onclick="showTab('bot')">🤖 Bot</button>
+  </nav>
+
+  <!-- INFOS -->
+  <div id="tab-info" class="tab-content active">
+    <div class="card">
+      <h2>Statistiques</h2>
+      <div class="info-grid">
+        <div class="info-box"><div class="val" id="i-guilds">—</div><div class="lbl">Serveurs</div></div>
+        <div class="info-box"><div class="val" id="i-members">—</div><div class="lbl">Membres</div></div>
+        <div class="info-box"><div class="val" id="i-uptime">—</div><div class="lbl">Uptime</div></div>
+        <div class="info-box"><div class="val" id="i-ping">—</div><div class="lbl">Ping ms</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MUSIQUE -->
+  <div id="tab-music" class="tab-content">
+    <div class="card">
+      <h2>Lecture</h2>
+      <label>Serveur</label>
+      <select id="music-guild" onchange="loadVoiceChannels()"></select>
+      <label>Salon vocal</label>
+      <select id="music-voice"></select>
+      <label>URL YouTube</label>
+      <input id="music-url" type="text" placeholder="https://www.youtube.com/watch?v=...">
+      <div class="status-row">
+        <button class="btn" onclick="playMusic()" style="flex:1">▶️ Play</button>
+        <button class="btn" onclick="skipMusic()" style="flex:1">⏭️ Skip</button>
+        <button class="btn" onclick="muteMusic()" style="flex:1">🔇 Mute</button>
+        <button class="btn" onclick="unmuteMusic()" style="flex:1">🔊 Demute</button>
+        <button class="btn red" onclick="stopMusic()" style="flex:1">⏹️ Stop</button>
+        <button class="btn orange" onclick="leaveVoice()" style="flex:1">🚪 Quitter</button>
+      </div>
+      <div id="music-status" style="margin-top:12px;font-size:13px;color:#b5bac1;"></div>
+    </div>
+    <div class="card">
+      <h2>File d'attente</h2>
+      <div id="queue-list" style="max-height:300px;overflow-y:auto;font-size:13px;"></div>
+    </div>
+  </div>
+
+  <!-- MESSAGE -->
+  <div id="tab-message" class="tab-content">
+    <div class="card">
+      <h2>Envoyer un message</h2>
+      <label>Serveur</label><select id="msg-guild" onchange="loadChannels('msg-guild','msg-chan')"></select>
+      <label>Salon</label><select id="msg-chan"></select>
+      <label>Message</label>
+      <textarea id="msg-content" placeholder="Ton message..."></textarea>
+      <button class="btn" onclick="sendMsg()">Envoyer</button>
+    </div>
+    <div class="card">
+      <h2>Supprimer des messages</h2>
+      <label>Serveur</label><select id="clr-guild" onchange="loadChannels('clr-guild','clr-chan')"></select>
+      <label>Salon</label><select id="clr-chan"></select>
+      <label>Nombre (1-100)</label>
+      <input id="clr-amount" type="number" min="1" max="100" value="10">
+      <button class="btn red" onclick="clearMessages()">Supprimer</button>
+    </div>
+  </div>
+
+  <!-- MODÉRATION -->
+  <div id="tab-moderation" class="tab-content">
+    <div class="card">
+      <h2>Serveur</h2>
+      <select id="mod-guild" onchange="loadMembers()"></select>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <h2>Ban</h2>
+        <label>Membre</label>
+        <select id="ban-member"></select>
+        <label>Raison</label>
+        <input id="ban-reason" type="text" placeholder="Raison...">
+        <button class="btn red" onclick="banMember()">Bannir</button>
+      </div>
+      <div class="card">
+        <h2>Unban</h2>
+        <label>Membre banni</label>
+        <select id="unban-member"></select>
+        <button class="btn green" onclick="unbanMember()" style="margin-top:28px">Débannir</button>
+        <button class="btn" onclick="loadBans()" style="margin-top:8px;background:#3b3d44">🔄 Rafraîchir</button>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <h2>Kick</h2>
+        <label>Membre</label>
+        <select id="kick-member"></select>
+        <label>Raison</label>
+        <input id="kick-reason" type="text" placeholder="Raison...">
+        <button class="btn orange" onclick="kickMember()">Expulser</button>
+      </div>
+      <div class="card">
+        <h2>Mute / Unmute</h2>
+        <label>Membre</label>
+        <select id="mute-member"></select>
+        <label>Durée</label>
+        <div class="dur-row">
+          <div class="dur-btn active" onclick="selDur(this,60000)">1 min</div>
+          <div class="dur-btn" onclick="selDur(this,300000)">5 min</div>
+          <div class="dur-btn" onclick="selDur(this,600000)">10 min</div>
+          <div class="dur-btn" onclick="selDur(this,3600000)">1h</div>
+          <div class="dur-btn" onclick="selDur(this,86400000)">24h</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn red" onclick="muteMember()">Muter</button>
+          <button class="btn green" onclick="unmuteMember()">Démuter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOT -->
+  <div id="tab-bot" class="tab-content">
+    <div class="card">
+      <h2>Status</h2>
+      <div class="status-row">
+        <div class="sbtn online active" onclick="selSt('online')"><span class="dot online"></span>En ligne</div>
+        <div class="sbtn idle" onclick="selSt('idle')"><span class="dot idle"></span>Absent</div>
+        <div class="sbtn dnd" onclick="selSt('dnd')"><span class="dot dnd"></span>Ne pas déranger</div>
+        <div class="sbtn invisible" onclick="selSt('invisible')"><span class="dot invisible"></span>Invisible</div>
+      </div>
+      <label>Type</label>
+      <select id="act-type">
+        <option value="Playing">Joue à</option>
+        <option value="Watching">Regarde</option>
+        <option value="Listening">Écoute</option>
+        <option value="Competing">En compétition dans</option>
+      </select>
+      <label>Texte</label>
+      <input id="act-text" type="text" placeholder="Ex: Rocket League">
+      <button class="btn" onclick="updateStatus()">Mettre à jour</button>
+    </div>
+
+    <div class="card">
+      <h2>Photo de profil</h2>
+      <label>URL</label>
+      <input id="pfp-url" type="text" placeholder="https://...">
+      <label>Ou fichier</label>
+      <input id="pfp-file" type="file" accept="image/*" onchange="previewPfp(this)">
+      <br><img id="pfp-preview" src="" alt="">
+      <button class="btn" onclick="updatePfp()">Changer</button>
+    </div>
+
+    <div class="card">
+      <h2>Nom du bot</h2>
+      <label>Nouveau nom</label>
+      <input id="new-username" type="text" placeholder="Nouveau nom...">
+      <button class="btn" onclick="updateUsername()">Changer le nom</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let st = 'online';
+let dur = 60000;
+let guilds = [];
+
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className='toast', 3000);
+}
+
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+async function login() {
+  const token = document.getElementById('token-input').value.trim();
+  document.getElementById('login-error').textContent = '';
+  if (!token) return;
+  const r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+  const d = await r.json();
+  if (d.ok) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('panel-screen').style.display = 'block';
+    document.getElementById('bot-avatar').src = d.avatar;
+    document.getElementById('bot-name').textContent = d.username;
+    document.getElementById('bot-tag').textContent = d.tag;
+    loadInfo();
+  } else {
+    document.getElementById('login-error').textContent = d.error;
+  }
+}
+
+async function logout() {
+  await fetch('/api/logout',{method:'POST'});
+  document.getElementById('panel-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('token-input').value='';
+}
+
+async function loadInfo() {
+  const r = await fetch('/api/info');
+  const d = await r.json();
+  if (!d.ok) return;
+  document.getElementById('bot-avatar').src = d.avatar;
+  document.getElementById('bot-name').textContent = d.username;
+  document.getElementById('bot-tag').textContent = d.tag;
+  document.getElementById('i-guilds').textContent = d.guilds;
+  document.getElementById('i-members').textContent = d.members;
+  document.getElementById('i-uptime').textContent = d.uptime;
+  document.getElementById('i-ping').textContent = d.ping;
+  guilds = d.guildList;
+
+  ['msg-guild','clr-guild','mod-guild','music-guild'].forEach(id => {
+    const el = document.getElementById(id);
+    const prev = el.value;
+    el.innerHTML = guilds.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    if (prev) el.value = prev;
+  });
+
+  loadChannels('msg-guild','msg-chan');
+  loadChannels('clr-guild','clr-chan');
+  loadMembers();
+  loadVoiceChannels();
+}
+
+async function loadChannels(guildSel, chanSel) {
+  const gid = document.getElementById(guildSel).value;
+  if (!gid) return;
+  const r = await fetch('/api/channels/'+gid);
+  const d = await r.json();
+  document.getElementById(chanSel).innerHTML = d.map(c=>`<option value="${c.id}">#${c.name}</option>`).join('');
+}
+
+async function loadVoiceChannels() {
+  const gid = document.getElementById('music-guild').value;
+  if (!gid) return;
+  const r = await fetch('/api/voice/'+gid);
+  const d = await r.json();
+  document.getElementById('music-voice').innerHTML = d.map(c=>`<option value="${c.id}">🔊 ${c.name}</option>`).join('');
+  loadQueue();
+}
+
+async function loadMembers() {
+  const gid = document.getElementById('mod-guild').value;
+  if (!gid) return;
+  const r = await fetch('/api/members/'+gid);
+  const d = await r.json();
+  const opts = d.map(m=>`<option value="${m.id}">${m.username}</option>`).join('');
+  ['ban-member','kick-member','mute-member'].forEach(id => document.getElementById(id).innerHTML = opts);
+  loadBans();
+}
+
+async function loadBans() {
+  const gid = document.getElementById('mod-guild').value;
+  if (!gid) return;
+  const r = await fetch('/api/bans/'+gid);
+  const d = await r.json();
+  document.getElementById('unban-member').innerHTML = d.length
+    ? d.map(b=>`<option value="${b.id}">${b.username}</option>`).join('')
+    : '<option>Aucun banni</option>';
+}
+
+async function sendMsg() {
+  const channelId = document.getElementById('msg-chan').value;
+  const content = document.getElementById('msg-content').value.trim();
+  if (!content) return toast('Message vide !','error');
+  const r = await fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channelId,content})});
+  const d = await r.json();
+  d.ok ? (toast('Envoyé !'), document.getElementById('msg-content').value='') : toast(d.error,'error');
+}
+
+async function clearMessages() {
+  const channelId = document.getElementById('clr-chan').value;
+  const amount = parseInt(document.getElementById('clr-amount').value);
+  const r = await fetch('/api/clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channelId,amount})});
+  const d = await r.json();
+  d.ok ? toast(`${d.deleted} message(s) supprimé(s) !`) : toast(d.error,'error');
+}
+
+async function banMember() {
+  const guildId = document.getElementById('mod-guild').value;
+  const userId = document.getElementById('ban-member').value;
+  const reason = document.getElementById('ban-reason').value;
+  const r = await fetch('/api/ban',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId,userId,reason})});
+  const d = await r.json();
+  d.ok ? (toast('Banni !'), loadMembers()) : toast(d.error,'error');
+}
+
+async function unbanMember() {
+  const guildId = document.getElementById('mod-guild').value;
+  const userId = document.getElementById('unban-member').value;
+  const r = await fetch('/api/unban',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId,userId})});
+  const d = await r.json();
+  d.ok ? (toast('Débanni !'), loadBans()) : toast(d.error,'error');
+}
+
+async function kickMember() {
+  const guildId = document.getElementById('mod-guild').value;
+  const userId = document.getElementById('kick-member').value;
+  const reason = document.getElementById('kick-reason').value;
+  const r = await fetch('/api/kick',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId,userId,reason})});
+  const d = await r.json();
+  d.ok ? (toast('Expulsé !'), loadMembers()) : toast(d.error,'error');
+}
+
+async function muteMember() {
+  const guildId = document.getElementById('mod-guild').value;
+  const userId = document.getElementById('mute-member').value;
+  const r = await fetch('/api/mute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId,userId,duration:dur})});
+  const d = await r.json();
+  d.ok ? toast('Muté !') : toast(d.error,'error');
+}
+
+async function unmuteMember() {
+  const guildId = document.getElementById('mod-guild').value;
+  const userId = document.getElementById('mute-member').value;
+  const r = await fetch('/api/unmute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId,userId})});
+  const d = await r.json();
+  d.ok ? toast('Démuté !') : toast(d.error,'error');
+}
+
+function selDur(el, ms) {
+  dur = ms;
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selSt(s) {
+  st = s;
+  document.querySelectorAll('.sbtn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.sbtn.'+s).classList.add('active');
+}
+
+async function updateStatus() {
+  const type = document.getElementById('act-type').value;
+  const text = document.getElementById('act-text').value.trim();
+  const r = await fetch('/api/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:st,type,text})});
+  const d = await r.json();
+  d.ok ? toast('Status mis à jour !') : toast(d.error,'error');
+}
+
+function previewPfp(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { const img = document.getElementById('pfp-preview'); img.src=e.target.result; img.style.display='block'; };
+  reader.readAsDataURL(file);
+}
+
+async function updatePfp() {
+  const url = document.getElementById('pfp-url').value.trim();
+  const file = document.getElementById('pfp-file').files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      const r = await fetch('/api/avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:e.target.result})});
+      const d = await r.json();
+      d.ok ? toast('Photo mise à jour !') : toast(d.error,'error');
+    };
+    reader.readAsDataURL(file);
+  } else if (url) {
+    const r = await fetch('/api/avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const d = await r.json();
+    d.ok ? toast('Photo mise à jour !') : toast(d.error,'error');
+  } else toast('Entre une URL ou un fichier','error');
+}
+
+async function updateUsername() {
+  const username = document.getElementById('new-username').value.trim();
+  if (!username) return toast('Nom vide','error');
+  const r = await fetch('/api/username',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
+  const d = await r.json();
+  d.ok ? toast('Nom mis à jour !') : toast(d.error,'error');
+}
+
+async function loadQueue() {
+  const gid = document.getElementById('music-guild').value;
+  if (!gid) return;
+  const r = await fetch('/api/music/queue/'+gid);
+  const d = await r.json();
+  if (!d.ok) return;
+  const status = d.current ? `▶️ ${d.current.title}` : 'Aucune musique en cours';
+  document.getElementById('music-status').textContent = status;
+  const queueHtml = d.queue.length ? d.queue.map((t,i) => `
+    <div class="queue-item" onclick="selectQueueItem(${i})">
+      <div class="num">${i+1}</div>
+      <div class="info">
+        <div class="title">${t.title}</div>
+        <div class="dur">${t.duration || ''}</div>
+      </div>
+      <div class="queue-actions">
+        <button class="queue-btn play" onclick="event.stopPropagation(); playQueueIndex(${i})">▶️</button>
+        <button class="queue-btn remove" onclick="event.stopPropagation(); removeQueueItem(${i})">🗑️</button>
+      </div>
+    </div>
+  `).join('') : '<div style="color:#80848e;padding:12px">File vide</div>';
+  document.getElementById('queue-list').innerHTML = queueHtml;
+}
+
+let selectedQueueIndex = -1;
+
+function selectQueueItem(index) {
+  selectedQueueIndex = index;
+  document.querySelectorAll('.queue-item').forEach((el, i) => {
+    el.classList.toggle('selected', i === index);
+  });
+}
+
+async function playQueueIndex(index) {
+  const guildId = document.getElementById('music-guild').value;
+  const r = await fetch('/api/music/play-index',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId,index})});
+  const d = await r.json();
+  d.ok ? toast(`Lecture : ${d.title}`) : toast(d.error,'error');
+}
+
+async function removeQueueItem(index) {
+  const guildId = document.getElementById('music-guild').value;
+  const r = await fetch('/api/music/remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId,index})});
+  const d = await r.json();
+  d.ok ? (toast(`Supprimé : ${d.removed}`), loadQueue()) : toast(d.error,'error');
+}
+
+async function playMusic() {
+  const guildId = document.getElementById('music-guild').value;
+  const channelId = document.getElementById('music-voice').value;
+  const url = document.getElementById('music-url').value.trim();
+  if (!url) return toast('URL manquante !','error');
+  if (!channelId) return toast('Choisis un salon vocal !','error');
+  const r = await fetch('/api/music/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId,channelId,url})});
+  const d = await r.json();
+  if (d.ok) {
+    toast(`Ajouté : ${d.title} (position ${d.position})`);
+    document.getElementById('music-url').value = '';
+    await loadQueue();
+  } else toast(d.error,'error');
+}
+
+async function skipMusic() {
+  const guildId = document.getElementById('music-guild').value;
+  const r = await fetch('/api/music/skip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId})});
+  const d = await r.json();
+  d.ok ? (toast('Passé !'), loadQueue()) : toast(d.error,'error');
+}
+
+async function stopMusic() {
+  const guildId = document.getElementById('music-guild').value;
+  const r = await fetch('/api/music/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId})});
+  const d = await r.json();
+  d.ok ? (toast('Arrêté !'), loadQueue()) : toast(d.error,'error');
+}
+
+async function leaveVoice() {
+  const guildId = document.getElementById('music-guild').value;
+  const r = await fetch('/api/music/leave',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId})});
+  const d = await r.json();
+  d.ok ? (toast('Quitté !'), loadQueue()) : toast(d.error,'error');
+}
+
+async function muteMusic() {
+  const guildId = document.getElementById('music-guild').value;
+  const r = await fetch('/api/music/mute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId})});
+  const d = await r.json();
+  d.ok ? toast('Mute !') : toast(d.error,'error');
+}
+
+async function unmuteMusic() {
+  const guildId = document.getElementById('music-guild').value;
+  const r = await fetch('/api/music/unmute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({guildId})});
+  const d = await r.json();
+  d.ok ? toast('Demute !') : toast(d.error,'error');
+}
+
+document.getElementById('token-input').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+setInterval(() => { if(document.getElementById('panel-screen').style.display!=='none') loadInfo(); }, 15000);
+setInterval(() => { if(document.getElementById('panel-screen').style.display!=='none' && document.getElementById('tab-music').classList.contains('active')) loadQueue(); }, 5000);
+</script>
+</body>
+</html>
