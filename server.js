@@ -19,7 +19,18 @@ const PORT = 4000;
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname))); // fallback racine
+app.use(express.static(path.join(__dirname)));
+
+// Route explicite pour la page principale
+app.get('/', (req, res) => {
+  const p = require('path');
+  const fs = require('fs');
+  const f1 = p.join(__dirname, 'public', 'index.html');
+  const f2 = p.join(__dirname, 'index.html');
+  if (fs.existsSync(f1)) res.sendFile(f1);
+  else if (fs.existsSync(f2)) res.sendFile(f2);
+  else res.send('Panel OK - index.html introuvable');
+});
 
 let botClient = null;
 
