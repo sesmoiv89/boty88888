@@ -19,6 +19,7 @@ const PORT = 4000;
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname))); // fallback racine
 
 let botClient = null;
 
